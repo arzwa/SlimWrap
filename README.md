@@ -54,8 +54,6 @@ rts = pyslim.recapitate(
 )
 ````
 
-```@raw html
-
         <div>
             <style>
                 .tskit-table thead tr th {text-align: left;padding: 0.5em 0.5em;}
@@ -595,7 +593,6 @@ rts = pyslim.recapitate(
             </div>
         </div>
     
-```
 
 Simulate neutral mutations
 
@@ -607,7 +604,6 @@ mts = msprime.sim_mutations(
 )
 ````
 
-```@raw html
 
         <div>
             <style>
@@ -1014,8 +1010,6 @@ mts = msprime.sim_mutations(
                 </div>
             </div>
         </div>
-    
-```
 
 Get coalescence times
 
