@@ -33,14 +33,14 @@ rts = pyslim.recapitate(
     demography=demography,
     ploidy=2,
     recombination_rate=params["RECRATE"]
-)
+);
 
 # Simulate neutral mutations
 mts = msprime.sim_mutations(
     ts, random_seed=11,
     rate=1e-8,
     keep=false
-)
+);
 
 # Get coalescence times
 tmrca = mts.diversity(mts.samples(population=1),
