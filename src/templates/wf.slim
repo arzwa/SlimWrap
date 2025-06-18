@@ -1,0 +1,13 @@
+initialize() {
+   initializeTreeSeq();
+   initializeMutationRate(0);
+   initializeMutationType("m1", 0.5, "f", 0.0);
+   initializeGenomicElementType("g1", m1, 1.0);
+   initializeGenomicElement(g1, 0, CHRSIZE-1);
+   initializeRecombinationRate(RECRATE);
+}
+1 early() {sim.addSubpop("p1", POPSIZE);}
+NGEN late() {
+	sim.treeSeqOutput(OUTFILE);
+}
+

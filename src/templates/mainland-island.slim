@@ -1,0 +1,54 @@
+initialize() {
+	initializeTreeSeq();
+	// Neutral mutations placeholder
+	initializeMutationType("m1", 0.5, "f", 0.0);
+	// Deleterious mutations
+	initializeMutationType("m2", 0.5, "f", S);
+	// Barrier loci
+	initializeMutationType("m3", 0.5, "f", S);
+	initializeGenomicElementType("g1", m2, 1.0);
+	initializeGenomicElement(g1, 0, L);
+	initializeRecombinationRateFromFile(RECOM_MAP, L, scale=SCALING);
+	initializeMutationRateFromFile(MUT_MAP, L, scale=SCALING);
+	defineGlobal("SEG_MUTS", integer(RUNTIME));
+}
+// Be aware SLiM considers multiplicative terms by default
+// Custom to have conditionally adaptive loci
+mutationEffect(m3, p1) {
+	if (homozygous)
+		return 1.0 + mut.selectionCoeff;
+	else
+		return 1.0 + mut.mutationType.dominanceCoeff * mut.selectionCoeff;
+}
+mutationEffect(m3, p2) {
+	if (homozygous)
+		return 1.0 - mut.selectionCoeff;
+	else
+		return 1.0 - mut.mutationType.dominanceCoeff * mut.selectionCoeff;
+}
+
+1 early() {
+	sim.addSubpop("p1", NE1);
+	sim.addSubpop("p2", NE2);
+	// Migration into p2 from p1
+	p2.setMigrationRates(p1, MIGRATION_RATE);
+}
+
+1 late(){
+	// Here we assume a set of fixed loci in the mainland
+	// Their locations and selection coefficients are passed from the command line
+	p1.haplosomes.addNewMutation(m3, BARRIER_COEF, BARRIER_POS);
+}
+
+late() {
+	SEG_MUTS[sim.cycle-1] = sim.countOfMutationsOfType(m2);
+}
+
+late() {
+    tick = sim.cycle;
+    if (any(tick == SAVE_TICKS)){
+        metadata = Dictionary("SEG_MUTS", SEG_MUTS);
+        sim.treeSeqOutput(OUTPREFIX + "." + tick + ".trees", metadata=metadata);
+    }
+}
+RUNTIME late() {}
