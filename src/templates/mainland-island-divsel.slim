@@ -21,7 +21,8 @@ initialize() {
     // take pos as Int...)
     defineGlobal("BARRIER_POS", asInteger(BARRIERS.allKeys));
     defineGlobal("NLOCI", length(BARRIER_POS));
-	defineGlobal("BARRIER_FREQ", matrix(float(2*NLOCI*NGEN), nrow=2*NLOCI, ncol=NGEN));
+	//defineGlobal("BARRIER_FREQ", matrix(float(2*NLOCI*NGEN), nrow=2*NLOCI, ncol=NGEN));
+	defineGlobal("BARRIER_FREQ", matrix(float(NLOCI*NGEN), nrow=NLOCI, ncol=NGEN));
     // define a new dict with the positions as integers
     defineGlobal("_BARRIERS", Dictionary());
 	for (i in seqLen(NLOCI)){
@@ -61,11 +62,7 @@ mutationEffect(m2, p2) {
     defineConstant("BARRIER_LOCI1", sim.mutationsOfType(m1));
     defineConstant("BARRIER_LOCI2", sim.mutationsOfType(m2));
 }
-2:NGEN early() {
-    // recording of frequencies has to be 'early', otherwise slight
-    // deviation from diffusion prediction?
-    BARRIER_FREQ[0:(NLOCI-1), sim.cycle-1] = sim.mutationFrequencies(p2, BARRIER_LOCI1);
-    BARRIER_FREQ[NLOCI:(2*NLOCI-1), sim.cycle-1] = sim.mutationFrequencies(p2, BARRIER_LOCI2);
+late() {
 	lambda = MU * 2 * p2.individualCount;
 	n_inds = rpois(NLOCI, lambda);
 	for (i in seqLen(NLOCI)){
@@ -78,6 +75,7 @@ mutationEffect(m2, p2) {
             hap_m2.addMutations(BARRIER_LOCI1[i]);
 		}
 	}
+    BARRIER_FREQ[0:(NLOCI-1), sim.cycle-1] = sim.mutationFrequencies(p2, BARRIER_LOCI1);
 }
 NGEN late() {
     metadata = Dictionary("BARRIER_FREQ", BARRIER_FREQ);
