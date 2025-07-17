@@ -1,0 +1,86 @@
+// RECRATE
+// CHRLEN
+// NGEN
+// NE1
+// NE2
+// MIGRATION_RATE
+// OUTFILE
+initialize() {
+	//initializeTreeSeq();
+	initializeMutationType("m1", 0.5, "f", 0.0);  // Neutral placeholder
+	initializeMutationType("m2", 0.5, "f", 0.0);  // Barrier loci
+    m1.convertToSubstitution = F;
+    m2.convertToSubstitution = F;
+    c(m1, m2).mutationStackGroup = 1;
+    c(m1, m2).mutationStackPolicy = "l";
+	initializeGenomicElementType("g1", m1, 1.0);
+	initializeGenomicElement(g1, 0, CHRLEN);
+	initializeRecombinationRate(RECRATE);
+	initializeMutationRate(0.0);
+    // BARRIERS is a Dictionary `Dict("pos" => [s, h])` (couldn't get it to
+    // take pos as Int...)
+    defineGlobal("BARRIER_POS", asInteger(BARRIERS.allKeys));
+    defineGlobal("NLOCI", length(BARRIER_POS));
+	defineGlobal("BARRIER_FREQ", matrix(float(2*NLOCI*NGEN), nrow=2*NLOCI, ncol=NGEN));
+    // define a new dict with the positions as integers
+    defineGlobal("_BARRIERS", Dictionary());
+	for (i in seqLen(NLOCI)){
+        _BARRIERS.setValue(BARRIER_POS[i], BARRIERS.getValue(asString(BARRIER_POS[i])));
+    }
+}
+mutationEffect(m2, p1) {
+    // get the locus parameters
+    k = mut.position;
+    s = _BARRIERS.getValue(k)[0];
+    h = _BARRIERS.getValue(k)[1];
+	if (homozygous)
+		return 1.0 + s;
+	else
+		return 1.0 + h * s;
+}
+mutationEffect(m2, p2) {
+    k = mut.position;
+    s = _BARRIERS.getValue(k)[0];
+    h = _BARRIERS.getValue(k)[1];
+	if (homozygous)
+		return 1.0 - s;
+	else
+		return 1.0 - h * s;
+}
+1 early() {
+	sim.addSubpop("p1", NE1);
+	sim.addSubpop("p2", NE2);
+	// Migration into p2 from p1
+	p2.setMigrationRates(p1, MIGRATION_RATE);
+}
+1 late(){
+    // We start with complete divergence. We assume the mainland remains
+    // fixed for the barrier loci.
+	p1.haplosomes.addNewMutation(m2, 0.0, BARRIER_POS);
+	p2.haplosomes.addNewMutation(m1, 0.0, BARRIER_POS);
+    defineConstant("BARRIER_LOCI1", sim.mutationsOfType(m1));
+    defineConstant("BARRIER_LOCI2", sim.mutationsOfType(m2));
+}
+2:NGEN early() {
+    // recording of frequencies has to be 'early', otherwise slight
+    // deviation from diffusion prediction?
+    BARRIER_FREQ[0:(NLOCI-1), sim.cycle-1] = sim.mutationFrequencies(p2, BARRIER_LOCI1);
+    BARRIER_FREQ[NLOCI:(2*NLOCI-1), sim.cycle-1] = sim.mutationFrequencies(p2, BARRIER_LOCI2);
+	lambda = MU * 2 * p2.individualCount;
+	n_inds = rpois(NLOCI, lambda);
+	for (i in seqLen(NLOCI)){
+        pos = BARRIER_POS[i];
+		if (n_inds[i]>0){
+            haplosomes = sample(p2.haplosomes, n_inds[i]);
+            hap_m1 = haplosomes[haplosomes.containsMarkerMutation(m1, pos)];
+            hap_m2 = haplosomes[haplosomes.containsMarkerMutation(m2, pos)];
+            hap_m1.addMutations(BARRIER_LOCI2[i]);
+            hap_m2.addMutations(BARRIER_LOCI1[i]);
+		}
+	}
+}
+NGEN late() {
+    metadata = Dictionary("BARRIER_FREQ", BARRIER_FREQ);
+	//sim.treeSeqOutput(OUTFILE, metadata=metadata);
+    writeFile(OUTFILE, metadata.serialize(format="csv"));
+}

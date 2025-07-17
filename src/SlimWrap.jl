@@ -6,8 +6,9 @@ include("slimwrap.jl")
 export SLiMModel
 
 templates = (
-    mainlandisland=joinpath(@__DIR__, "templates/mainland-island.slim"),
-    wf=joinpath(@__DIR__, "templates/wf.slim"),
+    mi1=joinpath(@__DIR__, "templates/mainland-island-divsel.slim"),
+    mi2=joinpath(@__DIR__, "templates/mainland-island-divsel-bgs.slim"),
+    wf =joinpath(@__DIR__, "templates/wf.slim"),
     )
 export templates
 
